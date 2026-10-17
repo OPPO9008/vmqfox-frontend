@@ -7,10 +7,10 @@ import AutoImport from 'unplugin-auto-import/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { fileURLToPath } from 'url'
 
-// https://devtools.vuejs.org/getting-started/introduction
-import vueDevTools from 'vite-plugin-vue-devtools'
+// 注意：不要在顶层静态导入 vite-plugin-vue-devtools，因为该模块在初始化时会访问浏览器 API（localStorage），
+// 这会在 Node 环境评估 vite.config.ts 时触发错误。我们在开发模式下动态导入它。
 
-export default ({ mode }) => {
+export default async ({ mode }) => {
   const root = process.cwd()
   const env = loadEnv(mode, root)
   const { VITE_VERSION, VITE_PORT, VITE_BASE_URL, VITE_VMQ_API_URL } = env
@@ -61,7 +61,9 @@ export default ({ mode }) => {
     })
   ]
 
+  // 仅在开发模式下动态加载 vue-devtools，避免在 Node 中执行包含 localStorage 的模块初始化
   if (mode === 'development') {
+    const { default: vueDevTools } = await import('vite-plugin-vue-devtools')
     pluginsList.push(vueDevTools())
   }
 
